@@ -19,24 +19,24 @@ contract VideOracle {
     mapping(uint256 => Request) public requests;
     uint256 public requestsCount;
 
-    struct Answer {
-        uint256 answerVideoId;
-        address payable answerer;
+    struct Proof {
+        uint256 tokenId;
+        address payable verifier;
     }
 
-    mapping(uint256 => mapping(uint256 => Answer)) public answersByRequest;
-    mapping(uint256 => uint256) public answersCount4Request;
-    mapping(uint256 => mapping(uint256 => uint256)) public pointsForAnswer4Request;
-    mapping(uint256 => mapping(uint256 => bool)) public claimedAnswer4Request;
+    mapping(uint256 => mapping(uint256 => Proof)) public proofsByRequest;
+    mapping(uint256 => uint256) public proofsCount4Request;
+    mapping(uint256 => mapping(uint256 => uint256)) public pointsForProof4Request;
+    mapping(uint256 => mapping(uint256 => bool)) public claimedProof4Request;
 
     event NewRequest(address indexed src, uint256 requestId, string requestUri);
 
-    function createRequest(uint256 time2answer, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
+    function createRequest(uint256 time2proof, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
         require(msg.value >= reward, 'value sent not enough');
 
         requestId = requestsCount++;
         requests[requestId] = Request({
-            endTime: block.timestamp + time2answer,
+            endTime: block.timestamp + time2proof,
             reward: reward,
             status: RequestStatus.ACTIVE,
             requester: msg.sender,
@@ -50,29 +50,29 @@ contract VideOracle {
         emit NewRequest(msg.sender, requestId, requestURI);
     }
 
-    function answerRequest(uint256 requestId, uint256 answerVideoId) public returns(uint256 answerId) {
+    function submitProof(uint256 requestId, uint256 proofVideoId) public returns(uint256 proofId) {
         require(requestId < requestsCount, 'request does not exist');
 
         Request memory request = requests[requestId];
 
-        require(request.requester != msg.sender, 'you cannot answer your own request');
+        require(request.requester != msg.sender, 'you cannot proof your own request');
 
         require(request.status == RequestStatus.ACTIVE, 'request not in active state');
 
-        answerId = answersCount4Request[requestId]++;
+        proofId = proofsCount4Request[requestId]++;
 
-        answersByRequest[requestId][answerId] = Answer({
-            answerVideoId: answerVideoId,
-            answerer: payable(msg.sender)
+        proofsByRequest[requestId][proofId] = Proof({
+            tokenId: proofVideoId,
+            verifier: payable(msg.sender)
         });
     }
 
-    function voteAnswers(uint256 requestId, uint256[] calldata answersIds, uint256[] calldata points) public {
-        require(answersIds.length == points.length, 'check answersIds and points');
+    function voteProofs(uint256 requestId, uint256[] calldata proofsIds, uint256[] calldata points) public {
+        require(proofsIds.length == points.length, 'check proofsIds and points');
 
         Request storage request = requests[requestId];
 
-        require(request.requester == msg.sender, 'only answerer can vote their own requests');
+        require(request.requester == msg.sender, 'only proofer can vote their own requests');
 
         if (request.status == RequestStatus.ACTIVE && request.endTime >= block.timestamp) {
             request.status = RequestStatus.VOTING;
@@ -81,10 +81,10 @@ contract VideOracle {
         require(request.status == RequestStatus.VOTING, 'request not in voting state');
 
         uint256 totalVotes = 0;
-        for(uint256 i = 0; i < answersIds.length; i++) {
-            uint256 answerPoints = points[i];
-            totalVotes += answerPoints;
-            pointsForAnswer4Request[requestId][answersIds[i]] = answerPoints;
+        for(uint256 i = 0; i < proofsIds.length; i++) {
+            uint256 proofPoints = points[i];
+            totalVotes += proofPoints;
+            pointsForProof4Request[requestId][proofsIds[i]] = proofPoints;
         }
 
         require(totalVotes <= TOTAL_VOTES, 'too many votes');
@@ -92,19 +92,19 @@ contract VideOracle {
         request.status = RequestStatus.CLOSED;
     }
 
-    function claim(uint256 requestId, uint256 answerId) public {
-        uint256 points = pointsForAnswer4Request[requestId][answerId];
+    function claim(uint256 requestId, uint256 proofId) public {
+        uint256 points = pointsForProof4Request[requestId][proofId];
         require(points > 0, 'no points to your request');
 
-        require(claimedAnswer4Request[requestId][answerId] == false, 'already claimed');
+        require(claimedProof4Request[requestId][proofId] == false, 'already claimed');
 
-        claimedAnswer4Request[requestId][answerId] = true;
+        claimedProof4Request[requestId][proofId] = true;
 
-        uint256 answerReward = requests[requestId].reward * points / TOTAL_VOTES;
+        uint256 proofReward = requests[requestId].reward * points / TOTAL_VOTES;
 
         Address.sendValue(
-            (answersByRequest[requestId][answerId]).answerer,
-            answerReward
+            (proofsByRequest[requestId][proofId]).verifier,
+            proofReward
         );
     }
 }
