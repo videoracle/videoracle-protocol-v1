@@ -1,18 +1,27 @@
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
+import { ConfigProperty, set } from "../utils/configManager";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const network = hre.network.name;
+  console.log("Network:", network);
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  const [deployer, ...users] = await ethers.getSigners();
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const SimpleERC20 = await ethers.getContractFactory("SimpleERC20");
+  const userAddresses = users.splice(0, 5).map((signer) => signer.address);
+  const simpleERC20 = await SimpleERC20.deploy([
+    deployer.address,
+    ...userAddresses,
+  ]);
 
-  await lock.deployed();
+  console.log("Deployed SimpleERC20 at", simpleERC20.address);
+  set(network, ConfigProperty.SimpleERC20, simpleERC20.address);
 
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+  const VideOracle = await ethers.getContractFactory("VideOracle");
+  const videOracle = await VideOracle.deploy();
+
+  console.log("Deployed VideOracle at", videOracle.address);
+  set(network, ConfigProperty.VideOracle, videOracle.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
