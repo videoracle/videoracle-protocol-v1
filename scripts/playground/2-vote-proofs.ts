@@ -5,7 +5,7 @@ async function main() {
   const network = hre.network.name;
   console.log("Network:", network);
 
-  const [, , bob] = await ethers.getSigners();
+  const [, alice] = await ethers.getSigners();
 
   // Get contracts
   const videOracle = await ethers.getContractAt(
@@ -13,22 +13,21 @@ async function main() {
     get(network, ConfigProperty.VideOracle)
   );
 
-  // Submit proof
+  // Vote proofs
   const requestId = 0;
-  const livePeerTokenId = 0; // TODO: use actual livepeer video
+  const proofIds = [0, 1, 2];
+  const points = [2, 2, 1];
 
   const tx = await videOracle
-    .connect(bob)
-    .submitProof(requestId, livePeerTokenId);
-  const receipt = await tx.wait();
-
-  const proofId = receipt.events
-    ?.find((e) => e.event === "NewProof")
-    ?.args?.proofId.toString();
+    .connect(alice)
+    .voteProofs(requestId, proofIds, points);
+  await tx.wait();
 
   console.log(
-    "Submitted proof with id:",
-    proofId,
+    "Votes proofs with ids: ",
+    proofIds,
+    ", with points: ",
+    points,
     ", for request with id:",
     requestId
   );
