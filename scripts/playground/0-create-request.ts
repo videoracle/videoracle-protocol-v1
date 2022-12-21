@@ -20,7 +20,7 @@ async function main() {
 
   const createRequestTx = await videOracle
     .connect(alice)
-    .askQuestion(timeToAnswer, reward, requestUri, {
+    .createRequest(timeToAnswer, reward, requestUri, {
       value: reward,
     });
   const receipt = await createRequestTx.wait();

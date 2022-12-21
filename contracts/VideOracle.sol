@@ -7,103 +7,103 @@ contract VideOracle {
 
     uint256 constant TOTAL_VOTES = 5;
 
-    enum QuestionStatus { ACTIVE, VOTING, CLOSED }
-    struct Question {
+    enum RequestStatus { ACTIVE, VOTING, CLOSED }
+    struct Request {
         uint256 endTime;
         uint256 reward;
-        QuestionStatus status;
-        address questioner;
-        string questionURI;
+        RequestStatus status;
+        address requester;
+        string requestUri;
     }
 
-    mapping(uint256 => Question) public questions;
-    uint256 public questionsCount;
+    mapping(uint256 => Request) public requests;
+    uint256 public requestsCount;
 
     struct Answer {
         uint256 answerVideoId;
         address payable answerer;
     }
 
-    mapping(uint256 => mapping(uint256 => Answer)) public answersByQuestion;
-    mapping(uint256 => uint256) public answersCount4Question;
-    mapping(uint256 => mapping(uint256 => uint256)) public pointsForAnswer4Question;
-    mapping(uint256 => mapping(uint256 => bool)) public claimedAnswer4Question;
+    mapping(uint256 => mapping(uint256 => Answer)) public answersByRequest;
+    mapping(uint256 => uint256) public answersCount4Request;
+    mapping(uint256 => mapping(uint256 => uint256)) public pointsForAnswer4Request;
+    mapping(uint256 => mapping(uint256 => bool)) public claimedAnswer4Request;
 
     event NewRequest(address indexed src, uint256 requestId, string requestUri);
 
-    function askQuestion(uint256 time2answer, uint256 reward, string calldata questionURI) public payable returns(uint256 questionId) {
+    function createRequest(uint256 time2answer, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
         require(msg.value >= reward, 'value sent not enough');
 
-        questionId = questionsCount++;
-        questions[questionId] = Question({
+        requestId = requestsCount++;
+        requests[requestId] = Request({
             endTime: block.timestamp + time2answer,
             reward: reward,
-            status: QuestionStatus.ACTIVE,
-            questioner: msg.sender,
-            questionURI: questionURI
+            status: RequestStatus.ACTIVE,
+            requester: msg.sender,
+            requestUri: requestURI
         });
 
         if (msg.value > reward) {
             Address.sendValue(payable(msg.sender),  msg.value - reward);
         }
 
-        emit NewRequest(msg.sender, questionId, questionURI);
+        emit NewRequest(msg.sender, requestId, requestURI);
     }
 
-    function answerQuestion(uint256 questionId, uint256 answerVideoId) public returns(uint256 answerId) {
-        require(questionId < questionsCount, 'question does not exist');
+    function answerRequest(uint256 requestId, uint256 answerVideoId) public returns(uint256 answerId) {
+        require(requestId < requestsCount, 'request does not exist');
 
-        Question memory question = questions[questionId];
+        Request memory request = requests[requestId];
 
-        require(question.questioner != msg.sender, 'you cannot answer your own question');
+        require(request.requester != msg.sender, 'you cannot answer your own request');
 
-        require(question.status == QuestionStatus.ACTIVE, 'question not in active state');
+        require(request.status == RequestStatus.ACTIVE, 'request not in active state');
 
-        answerId = answersCount4Question[questionId]++;
+        answerId = answersCount4Request[requestId]++;
 
-        answersByQuestion[questionId][answerId] = Answer({
+        answersByRequest[requestId][answerId] = Answer({
             answerVideoId: answerVideoId,
             answerer: payable(msg.sender)
         });
     }
 
-    function voteAnswers(uint256 questionId, uint256[] calldata answersIds, uint256[] calldata points) public {
+    function voteAnswers(uint256 requestId, uint256[] calldata answersIds, uint256[] calldata points) public {
         require(answersIds.length == points.length, 'check answersIds and points');
 
-        Question storage question = questions[questionId];
+        Request storage request = requests[requestId];
 
-        require(question.questioner == msg.sender, 'only answerer can vote their own questions');
+        require(request.requester == msg.sender, 'only answerer can vote their own requests');
 
-        if (question.status == QuestionStatus.ACTIVE && question.endTime >= block.timestamp) {
-            question.status = QuestionStatus.VOTING;
+        if (request.status == RequestStatus.ACTIVE && request.endTime >= block.timestamp) {
+            request.status = RequestStatus.VOTING;
         }
 
-        require(question.status == QuestionStatus.VOTING, 'question not in voting state');
+        require(request.status == RequestStatus.VOTING, 'request not in voting state');
 
         uint256 totalVotes = 0;
         for(uint256 i = 0; i < answersIds.length; i++) {
             uint256 answerPoints = points[i];
             totalVotes += answerPoints;
-            pointsForAnswer4Question[questionId][answersIds[i]] = answerPoints;
+            pointsForAnswer4Request[requestId][answersIds[i]] = answerPoints;
         }
 
         require(totalVotes <= TOTAL_VOTES, 'too many votes');
 
-        question.status = QuestionStatus.CLOSED;
+        request.status = RequestStatus.CLOSED;
     }
 
-    function claim(uint256 questionId, uint256 answerId) public {
-        uint256 points = pointsForAnswer4Question[questionId][answerId];
-        require(points > 0, 'no points to your question');
+    function claim(uint256 requestId, uint256 answerId) public {
+        uint256 points = pointsForAnswer4Request[requestId][answerId];
+        require(points > 0, 'no points to your request');
 
-        require(claimedAnswer4Question[questionId][answerId] == false, 'already claimed');
+        require(claimedAnswer4Request[requestId][answerId] == false, 'already claimed');
 
-        claimedAnswer4Question[questionId][answerId] = true;
+        claimedAnswer4Request[requestId][answerId] = true;
 
-        uint256 answerReward = questions[questionId].reward * points / TOTAL_VOTES;
+        uint256 answerReward = requests[requestId].reward * points / TOTAL_VOTES;
 
         Address.sendValue(
-            (answersByQuestion[questionId][answerId]).answerer,
+            (answersByRequest[requestId][answerId]).answerer,
             answerReward
         );
     }
