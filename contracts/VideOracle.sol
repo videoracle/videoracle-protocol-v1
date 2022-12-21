@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-contract Videoracle {
+contract VideOracle {
 
     uint256 constant TOTAL_VOTES = 5;
 
