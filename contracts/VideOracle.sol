@@ -30,6 +30,7 @@ contract VideOracle {
     mapping(uint256 => mapping(uint256 => bool)) public claimedProof4Request;
 
     event NewRequest(address indexed src, uint256 requestId, string requestUri);
+    event NewProof(address indexed src, uint256 indexed requestId, uint256 proofId);
 
     function createRequest(uint256 time2proof, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
         require(msg.value >= reward, 'value sent not enough');
@@ -50,7 +51,7 @@ contract VideOracle {
         emit NewRequest(msg.sender, requestId, requestURI);
     }
 
-    function submitProof(uint256 requestId, uint256 proofVideoId) public returns(uint256 proofId) {
+    function submitProof(uint256 requestId, uint256 tokenId) public returns(uint256 proofId) {
         require(requestId < requestsCount, 'request does not exist');
 
         Request memory request = requests[requestId];
@@ -62,9 +63,11 @@ contract VideOracle {
         proofId = proofsCount4Request[requestId]++;
 
         proofsByRequest[requestId][proofId] = Proof({
-            tokenId: proofVideoId,
+            tokenId: tokenId,
             verifier: payable(msg.sender)
         });
+
+        emit NewProof(msg.sender, requestId, proofId);
     }
 
     function voteProofs(uint256 requestId, uint256[] calldata proofsIds, uint256[] calldata points) public {
