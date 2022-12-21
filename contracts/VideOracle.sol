@@ -29,6 +29,8 @@ contract VideOracle {
     mapping(uint256 => mapping(uint256 => uint256)) public pointsForAnswer4Question;
     mapping(uint256 => mapping(uint256 => bool)) public claimedAnswer4Question;
 
+    event NewRequest(address indexed src, uint256 requestId, string requestUri);
+
     function askQuestion(uint256 time2answer, uint256 reward, string calldata questionURI) public payable returns(uint256 questionId) {
         require(msg.value >= reward, 'value sent not enough');
 
@@ -42,8 +44,10 @@ contract VideOracle {
         });
 
         if (msg.value > reward) {
-            Address.sendValue(payable(msg.sender),  msg.value-reward);
+            Address.sendValue(payable(msg.sender),  msg.value - reward);
         }
+
+        emit NewRequest(msg.sender, questionId, questionURI);
     }
 
     function answerQuestion(uint256 questionId, uint256 answerVideoId) public returns(uint256 answerId) {
