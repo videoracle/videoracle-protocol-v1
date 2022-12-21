@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 
 export enum ConfigProperty {
-  SimpleERC20 = "simpleERC20Address",
   VideOracle = "videOracleAddress",
 }
 
