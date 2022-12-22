@@ -1,4 +1,4 @@
-import { create, IPFSHTTPClient } from "ipfs-http-client";
+import { create } from "ipfs-http-client";
 
 const uploadToIPFS = async (data: Record<string, any>) => {
   try {
@@ -11,7 +11,7 @@ const uploadToIPFS = async (data: Record<string, any>) => {
       },
     });
 
-    const result = await (ipfs as IPFSHTTPClient).add(JSON.stringify(data));
+    const result = await ipfs.add(JSON.stringify(data));
     return result.path;
   } catch (error) {
     console.error("IPFS error ", error);
