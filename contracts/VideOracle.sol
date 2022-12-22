@@ -29,7 +29,7 @@ contract VideOracle {
     mapping(uint256 => mapping(uint256 => uint256)) public pointsForProof4Request;
     mapping(uint256 => mapping(uint256 => bool)) public claimedProof4Request;
 
-    event NewRequest(address indexed src, uint256 requestId, string requestUri);
+    event NewRequest(address indexed src, uint256 requestId, uint256 timeToProof, uint256 reward,  string requestUri);
     event NewProof(address indexed src, uint256 indexed requestId, uint256 proofId);
 
     function createRequest(uint256 time2proof, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
@@ -48,7 +48,7 @@ contract VideOracle {
             Address.sendValue(payable(msg.sender),  msg.value - reward);
         }
 
-        emit NewRequest(msg.sender, requestId, requestURI);
+        emit NewRequest(msg.sender, requestId, time2proof, reward, requestURI);
     }
 
     function submitProof(uint256 requestId, uint256 tokenId) public returns(uint256 proofId) {
