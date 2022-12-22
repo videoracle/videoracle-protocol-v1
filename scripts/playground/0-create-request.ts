@@ -1,5 +1,6 @@
 import hre, { ethers } from "hardhat";
 import { get, ConfigProperty } from "../../utils/configManager";
+import uploadToIPFS from "../../utils/ipfs";
 
 async function main() {
   const network = hre.network.name;
@@ -14,9 +15,16 @@ async function main() {
   );
 
   // Create request
-  const requestUri = "request-uri";
   const timeToAnswer = 100;
   const reward = 100;
+
+  const requestUri = await uploadToIPFS({
+    title: "Test request",
+    description: "This is a test request",
+    image: "https://i.imgur.com/hMVpght.jpeg",
+    location: "40.7128,-74.0060",
+  });
+  if (!requestUri) return;
 
   const createRequestTx = await videOracle
     .connect(alice)
