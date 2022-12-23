@@ -19,8 +19,9 @@ async function main() {
   const reward = 100;
 
   const requestUri = await uploadToIPFS({
-    title: "Test request",
-    description: "This is a test request",
+    title: "This is a request to make something",
+    description:
+      "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
     image: "https://i.imgur.com/hMVpght.jpeg",
     location: "40.7128,-74.0060",
   });
