@@ -29,15 +29,16 @@ contract VideOracle {
     mapping(uint256 => mapping(uint256 => uint256)) public pointsForProof4Request;
     mapping(uint256 => mapping(uint256 => bool)) public claimedProof4Request;
 
-    event NewRequest(address indexed src, uint256 requestId, uint256 timeToProof, uint256 reward,  string requestUri);
-    event NewProof(address indexed src, uint256 indexed requestId, uint256 proofId);
+    event NewRequest(address indexed src, uint256 requestId, uint256 endTime, uint256 reward,  string requestUri);
+    event NewProof(address indexed src, uint256 indexed requestId, uint256 proofId, uint256 tokenId);
 
     function createRequest(uint256 time2proof, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
         require(msg.value >= reward, 'value sent not enough');
+        uint256 endTime = block.timestamp + time2proof;
 
         requestId = requestsCount++;
         requests[requestId] = Request({
-            endTime: block.timestamp + time2proof,
+            endTime: endTime,
             reward: reward,
             status: RequestStatus.ACTIVE,
             requester: msg.sender,
@@ -48,7 +49,7 @@ contract VideOracle {
             Address.sendValue(payable(msg.sender),  msg.value - reward);
         }
 
-        emit NewRequest(msg.sender, requestId, time2proof, reward, requestURI);
+        emit NewRequest(msg.sender, requestId, endTime, reward, requestURI);
     }
 
     function submitProof(uint256 requestId, uint256 tokenId) public returns(uint256 proofId) {
@@ -67,7 +68,7 @@ contract VideOracle {
             verifier: payable(msg.sender)
         });
 
-        emit NewProof(msg.sender, requestId, proofId);
+        emit NewProof(msg.sender, requestId, proofId, tokenId);
     }
 
     function voteProofs(uint256 requestId, uint256[] calldata proofsIds, uint256[] calldata points) public {
