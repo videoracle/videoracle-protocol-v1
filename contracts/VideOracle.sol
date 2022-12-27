@@ -31,6 +31,8 @@ contract VideOracle {
 
     event NewRequest(address indexed src, uint256 requestId, uint256 endTime, uint256 reward,  string requestUri);
     event NewProof(address indexed src, uint256 indexed requestId, uint256 proofId, uint256 tokenId);
+    event RequestVotingOpened(address indexed src, uint256 indexed requestId);
+    event RequestClosed(address indexed src, uint256 indexed requestId);
 
     function createRequest(uint256 time2proof, uint256 reward, string calldata requestURI) public payable returns(uint256 requestId) {
         require(msg.value >= reward, 'value sent not enough');
@@ -78,8 +80,9 @@ contract VideOracle {
 
         require(request.requester == msg.sender, 'only proofer can vote their own requests');
 
-        if (request.status == RequestStatus.ACTIVE && request.endTime >= block.timestamp) {
+        if (request.status == RequestStatus.ACTIVE && request.endTime <= block.timestamp) {
             request.status = RequestStatus.VOTING;
+            emit RequestVotingOpened(request.requester, requestId);
         }
 
         require(request.status == RequestStatus.VOTING, 'request not in voting state');
@@ -94,6 +97,7 @@ contract VideOracle {
         require(totalVotes <= TOTAL_VOTES, 'too many votes');
 
         request.status = RequestStatus.CLOSED;
+        emit RequestClosed(request.requester, requestId);
     }
 
     function claim(uint256 requestId, uint256 proofId) public {
