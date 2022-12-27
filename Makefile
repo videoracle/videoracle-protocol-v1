@@ -17,4 +17,5 @@ submit-proof:
 vote-proofs:
 	npx hardhat run scripts/playground/2-vote-proofs.ts --network $(NETWORK)
 
-setup: deploy create-request submit-proof vote-proofs
+setup: deploy
+	npx hardhat run scripts/playground/setup.ts --network $(NETWORK)
