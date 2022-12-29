@@ -23,7 +23,10 @@ async function main() {
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
     image: "https://i.imgur.com/hMVpght.jpeg",
-    location: "40.7128,-74.0060",
+    location: {
+      lat: 40.7128,
+      lng: 74.006,
+    },
   });
   if (!requestUri) return;
 
