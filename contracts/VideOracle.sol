@@ -3,10 +3,9 @@ pragma solidity ^0.8.13;
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
 
-contract VideOracle is Ownable2Step, ReentrancyGuard, Multicall {
+contract VideOracle is Ownable2Step, Multicall {
     enum RequestStatus {
         ACTIVE,
         VOTING,
@@ -60,7 +59,7 @@ contract VideOracle is Ownable2Step, ReentrancyGuard, Multicall {
         uint256 time2proof,
         uint256 reward,
         string calldata requestURI
-    ) public payable nonReentrant returns (uint256 requestId) {
+    ) public payable returns (uint256 requestId) {
         uint256 minIn = (reward * (1e5 + _feeBPS)) / 1e5;
         require(msg.value >= minIn, "value sent not enough");
 
