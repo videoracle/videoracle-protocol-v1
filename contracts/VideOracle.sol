@@ -55,6 +55,14 @@ contract VideOracle is Ownable2Step, Multicall {
         _feeCollector = feeCollector_;
     }
 
+    function updateFeeBPS(uint256 fee_) public onlyOwner {
+        _feeBPS = fee_;
+    }
+
+    function updateFeeCollector(address collector_) public onlyOwner {
+        _feeCollector = collector_;
+    }
+
     function createRequest(
         uint256 time2proof,
         uint256 reward,
