@@ -3,9 +3,10 @@ pragma solidity ^0.8.13;
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
 
-contract VideOracle is Ownable2Step, Multicall {
+// import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
+
+contract VideOracle is Ownable2Step {
     enum RequestStatus {
         ACTIVE,
         VOTING,
