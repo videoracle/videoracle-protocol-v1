@@ -107,7 +107,7 @@ contract VideOracle is Ownable2Step, GasTank {
         return _submitProof(prover, requestId, tokenId);
     }
 
-    function sumbitDelegatedProof(
+    function submitDelegatedProof(
         address prover,
         uint256 requestId,
         uint256 tokenId
