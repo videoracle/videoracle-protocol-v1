@@ -25,15 +25,15 @@ contract ImAnEscrow is Ownable2Step, ReentrancyGuard, EIP712 {
         uint256[] amounts;
     }
 
-    address private _feeJar;
+    // address private _feeJar;
 
     mapping(string => Request) private requests;
 
     constructor() EIP712("VideOracleEscrow", "1") {}
 
-    function updateFeeJar(address jar) external onlyOwner {
-        _feeJar = jar;
-    }
+    // function updateFeeJar(address jar) external onlyOwner {
+    //     _feeJar = jar;
+    // }
 
     //CREATE REQUEST
     /**
