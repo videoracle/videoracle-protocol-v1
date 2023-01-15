@@ -12,88 +12,27 @@ contract ImAnEscrow is Ownable2Step, ReentrancyGuard, EIP712 {
     using Address for address;
     using ECDSA for bytes32;
 
-    struct CustomerVoucher {
-        address entity;
-        uint256 feeBPS;
-    }
-    struct ClaimVoucher {
-        string reqId;
-        address to;
-        uint256 amount;
-    }
-    struct CustomerConfig {
-        bool active;
-        uint256 feeBPS;
-    }
     struct Request {
         string id;
         address bountyAsset;
         uint256 bountyAmount;
+        uint256 feeAmount;
         bool closed;
+    }
+    struct DispatchVoucher {
+        string reqId;
+        address[] receivers;
+        uint256[] amounts;
     }
 
     address private _feeJar;
 
-    mapping(string => address) private requesters;
     mapping(string => Request) private requests;
-    mapping(address => CustomerConfig) private customerConfigs;
 
     constructor() EIP712("VideOracleEscrow", "1") {}
 
-    modifier onlyCustomer() {
-        require(customerConfigs[_msgSender()].active, "UNAUTHORIZED");
-        _;
-    }
-
-    // CUSTOMER
-    function setCustomerConfig(address customer, CustomerConfig calldata config)
-        external
-        onlyOwner
-    {
-        customerConfigs[customer] = config;
-    }
-
-    /**
-     * @notice Voodoo magic required for vouchers
-     */
-    function customerTypeHash() internal pure returns (bytes32) {
-        return keccak256("Customer(address entity,uint feeBPS)");
-    }
-
-    /**
-     * @notice Voodoo magic required for vouchers
-     */
-    function _hashCustomer(CustomerVoucher calldata voucher)
-        internal
-        view
-        returns (bytes32)
-    {
-        return
-            _hashTypedDataV4(
-                keccak256(
-                    abi.encode(
-                        customerTypeHash(),
-                        voucher.entity,
-                        voucher.feeBPS
-                    )
-                )
-            );
-    }
-
-    /**
-     * @notice Become a customer
-     * @dev The customer will be handed a voucher that let's it use this contract
-     * @param voucher - a voucher
-     * @param signedMessage - A voucher signed by the owner
-     */
-    function becomeCustomer(
-        CustomerVoucher calldata voucher,
-        bytes calldata signedMessage
-    ) external {
-        address signer = _hashCustomer(voucher).recover(signedMessage);
-        require(signer == owner(), "INVALID_SIGNER");
-        customerConfigs[voucher.entity].feeBPS = voucher.feeBPS;
-        customerConfigs[voucher.entity].active = true;
+    function updateFeeJar(address jar) external onlyOwner {
+        _feeJar = jar;
     }
 
     //CREATE REQUEST
@@ -103,7 +42,7 @@ contract ImAnEscrow is Ownable2Step, ReentrancyGuard, EIP712 {
     function requestTypeHash() internal pure returns (bytes32) {
         return
             keccak256(
-                "Request(string id, address bountyAsset, uint bountyAmount, bool closed)"
+                "Request(string id, address bountyAsset, uint bountyAmount, uint feeAmount, bool closed)"
             );
     }
 
@@ -123,6 +62,7 @@ contract ImAnEscrow is Ownable2Step, ReentrancyGuard, EIP712 {
                         req.id,
                         req.bountyAsset,
                         req.bountyAmount,
+                        req.feeAmount,
                         req.closed
                     )
                 )
@@ -132,58 +72,123 @@ contract ImAnEscrow is Ownable2Step, ReentrancyGuard, EIP712 {
     /**
      * @notice Create a Request
      * @dev The customer will be handed a voucher that let's it use this contract
+     * TBD - for privacy-preserving reasons it is strongly suggested to have this called by a burner wallet
+     * and check off-chain that the funds have been transferred
      * @param request - a request
      * @param signedMessage - A voucher signed by the owner
      */
     function createRequest(
         Request calldata request,
         bytes calldata signedMessage
-    ) external payable onlyCustomer {
+    ) external payable {
         address signer = _hashRequest(request).recover(signedMessage);
         require(signer == owner(), "INVALID_SIGNER");
 
         requests[request.id] = request;
-        uint256 customerFee = customerConfigs[_msgSender()].feeBPS;
-
-        uint256 feeAmt = (request.bountyAmount * customerFee) / 1e5;
-        if (request.bountyAsset == address(0)) {
-            uint256 minIn = (request.bountyAmount + feeAmt);
-            require(msg.value >= minIn, "INVALID_AMOUT");
-            requesters[request.id] = _msgSender();
-            // Send fee to collector
-            Address.sendValue(payable(_feeJar), feeAmt);
-            if (msg.value > minIn) {
-                Address.sendValue(payable(_msgSender()), msg.value - minIn);
-            }
-        } else {
-            IERC20 token = IERC20(request.bountyAsset);
-            token.transferFrom(_msgSender(), _feeJar, feeAmt);
-            token.transferFrom(
-                _msgSender(),
-                address(this),
-                request.bountyAmount
-            );
-        }
+        // The below is only needed if not using a burner wallet
+        // if (request.bountyAsset == address(0)) {
+        //     uint256 minIn = (request.bountyAmount + request.feeAmount);
+        //     require(msg.value >= minIn, "INVALID_AMOUT");
+        //     // Send fee to collector
+        //     Address.sendValue(payable(_feeJar), request.feeAmount);
+        //     if (msg.value > minIn) {
+        //         Address.sendValue(payable(_msgSender()), msg.value - minIn);
+        //     }
+        // } else {
+        //     IERC20 token = IERC20(request.bountyAsset);
+        //     token.transferFrom(_msgSender(), _feeJar, request.feeAmount);
+        //     token.transferFrom(
+        //         _msgSender(),
+        //         address(this),
+        //         request.bountyAmount
+        //     );
+        // }
     }
 
+    /**
+     * @dev burner wallets should be used in this situation as well
+     */
+    function cancelRequest(
+        Request calldata request,
+        bytes calldata signedMessage
+    ) external payable {
+        address signer = _hashRequest(request).recover(signedMessage);
+        require(signer == owner(), "INVALID_SIGNER");
+
+        Request memory req = requests[request.id];
+        require(!req.closed, "UNAUTHORIZED");
+        requests[req.id].closed = true;
+        // Uncomment if not using burner wallets
+        // if (req.bountyAsset == address(0)) {
+        //     Address.sendValue(payable(requesters[req.id]), req.bountyAmount);
+        // } else {
+        //     IERC20(req.bountyAsset).transfer(
+        //         requesters[req.id],
+        //         req.bountyAmount
+        //     );
+        // }
+    }
+
+    // BOUNTIES
+    /**
+     * @notice Voodoo magic required for vouchers
+     */
+    function dispatchTypeHash() internal pure returns (bytes32) {
+        return
+            keccak256(
+                "DispatchVoucher(string reqId, address[] receivers, uint[] amounts)"
+            );
+    }
+
+    /**
+     * @notice Voodoo magic required for vouchers
+     */
+    function _hashDispatch(DispatchVoucher calldata voucher)
+        internal
+        view
+        returns (bytes32)
+    {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        dispatchTypeHash(),
+                        voucher.reqId,
+                        voucher.receivers,
+                        voucher.amounts
+                    )
+                )
+            );
+    }
+
+    /**
+     * @dev you guessed it - burner wallet should be used here too
+     */
     function dispatchBounties(
-        string calldata reqId,
-        address[] calldata receivers,
-        uint256[] calldata amounts
-    ) external onlyCustomer {
+        DispatchVoucher calldata voucher,
+        bytes calldata signedMessage
+    ) external {
+        address signer = _hashDispatch(voucher).recover(signedMessage);
+        require(signer == owner(), "INVALID_SIGNER");
+
         uint256 totalSent = 0;
-        Request memory req = requests[reqId];
-        require(requesters[reqId] == _msgSender(), "UNATHORIZED");
+        Request memory req = requests[voucher.reqId];
         require(!req.closed, "CLOSED");
-        for (uint256 i; i < receivers.length; ++i) {
-            totalSent += amounts[i];
+        for (uint256 i; i < voucher.receivers.length; ++i) {
+            totalSent += voucher.amounts[i];
             if (req.bountyAsset == address(0)) {
-                Address.sendValue(payable(receivers[i]), amounts[i]);
+                Address.sendValue(
+                    payable(voucher.receivers[i]),
+                    voucher.amounts[i]
+                );
             } else {
-                IERC20(req.bountyAsset).transfer(receivers[i], amounts[i]);
+                IERC20(req.bountyAsset).transfer(
+                    voucher.receivers[i],
+                    voucher.amounts[i]
+                );
             }
         }
         require(totalSent <= req.bountyAmount, "INVALID_AMOUNT");
-        requests[reqId].closed = true;
+        requests[voucher.reqId].closed = true;
     }
 }
