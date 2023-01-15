@@ -8,6 +8,9 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/**
+ * @notice Potentially privacy preserving contract that relies on permits generated off-chain
+ */
 contract ImAnEscrow is Ownable2Step, ReentrancyGuard, EIP712 {
     using Address for address;
     using ECDSA for bytes32;
