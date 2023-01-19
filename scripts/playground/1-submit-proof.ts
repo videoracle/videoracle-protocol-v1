@@ -16,7 +16,7 @@ async function main() {
   // Submit proof
   const requestId = 0;
   const proofUri =
-    "https://bafkreiageoejetyzuqy6rpedbgbuu3zx2pntm4omrevsb5mb7hj2xn2z2y.ipfs.dweb.link/"; // TODO: use actual livepeer video
+    "bafkreiageoejetyzuqy6rpedbgbuu3zx2pntm4omrevsb5mb7hj2xn2z2y"; // TODO: use actual livepeer video
 
   const tx = await videOracle.connect(bob).submitProof(requestId, proofUri);
   const receipt = await tx.wait();

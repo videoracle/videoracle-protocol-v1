@@ -17,6 +17,7 @@ async function main() {
   // Create request
   const timeToAnswer = 3600;
   const reward = 100;
+  const rewardWithFee = reward * 1.3;
 
   const requestUri = await uploadToIPFS({
     title: "This is a request to make something",
@@ -34,7 +35,7 @@ async function main() {
   const createRequestTx = await videOracle
     .connect(alice)
     .createRequest(timeToAnswer, reward, requestUri, {
-      value: reward,
+      value: rewardWithFee,
     });
   const receipt = await createRequestTx.wait();
 
