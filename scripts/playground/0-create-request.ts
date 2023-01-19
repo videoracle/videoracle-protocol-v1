@@ -15,7 +15,7 @@ async function main() {
   );
 
   // Create request
-  const timeToAnswer = 100;
+  const timeToAnswer = 3600;
   const reward = 100;
 
   const requestUri = await uploadToIPFS({
@@ -24,6 +24,7 @@ async function main() {
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
     image: "https://i.imgur.com/hMVpght.jpeg",
     location: {
+      address: "Milan, Italy",
       lat: 40.7128,
       lng: 74.006,
     },

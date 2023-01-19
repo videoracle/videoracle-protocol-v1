@@ -18,8 +18,8 @@ contract VideOracle is Ownable2Step {
         string requestUri;
     }
     struct Proof {
-        uint256 tokenId;
         address payable verifier;
+        string proofUri;
     }
 
     event NewRequest(
@@ -33,7 +33,7 @@ contract VideOracle is Ownable2Step {
         address indexed src,
         uint256 indexed requestId,
         uint256 proofId,
-        uint256 tokenId
+        string proofUri
     );
     event RequestVotingOpened(address indexed src, uint256 indexed requestId);
     event RequestClosed(address indexed src, uint256 indexed requestId);
@@ -65,7 +65,7 @@ contract VideOracle is Ownable2Step {
     function createRequest(
         uint256 time2proof,
         uint256 reward,
-        string calldata requestURI
+        string calldata requestUri
     ) public payable returns (uint256 requestId) {
         uint256 minIn = (reward * (1e5 + _feeBPS)) / 1e5;
         require(msg.value >= minIn, "value sent not enough");
@@ -77,7 +77,7 @@ contract VideOracle is Ownable2Step {
             reward: reward,
             status: RequestStatus.ACTIVE,
             requester: msg.sender,
-            requestUri: requestURI
+            requestUri: requestUri
         });
 
         // Send fee to collector
@@ -86,10 +86,10 @@ contract VideOracle is Ownable2Step {
             Address.sendValue(payable(msg.sender), msg.value - minIn);
         }
 
-        emit NewRequest(msg.sender, requestId, endTime, reward, requestURI);
+        emit NewRequest(msg.sender, requestId, endTime, reward, requestUri);
     }
 
-    function submitProof(uint256 requestId, uint256 tokenId)
+    function submitProof(uint256 requestId, string calldata proofUri)
         public
         returns (uint256 proofId)
     {
@@ -110,11 +110,11 @@ contract VideOracle is Ownable2Step {
         proofId = proofsCount4Request[requestId]++;
 
         proofsByRequest[requestId][proofId] = Proof({
-            tokenId: tokenId,
+            proofUri: proofUri,
             verifier: payable(msg.sender)
         });
 
-        emit NewProof(msg.sender, requestId, proofId, tokenId);
+        emit NewProof(msg.sender, requestId, proofId, proofUri);
     }
 
     function voteProofs(
