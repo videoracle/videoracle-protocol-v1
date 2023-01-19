@@ -16,7 +16,7 @@ async function main() {
   // Submit proof
   const requestId = 0;
   const proofUri =
-    "bafkreiageoejetyzuqy6rpedbgbuu3zx2pntm4omrevsb5mb7hj2xn2z2y"; // TODO: use actual livepeer video
+    "bafkreibrcwvsrtujst2shg7qhi6kkmeomwnbhibjadp2m4btyhbfoi3dl4";
 
   const tx = await videOracle.connect(bob).submitProof(requestId, proofUri);
   const receipt = await tx.wait();

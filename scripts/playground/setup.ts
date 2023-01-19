@@ -92,7 +92,7 @@ async function main() {
 
   // Submit proofs
   const proofUri =
-    "https://bafkreiageoejetyzuqy6rpedbgbuu3zx2pntm4omrevsb5mb7hj2xn2z2y.ipfs.dweb.link/";
+    "bafkreibrcwvsrtujst2shg7qhi6kkmeomwnbhibjadp2m4btyhbfoi3dl4";
   const proofs = [
     {
       verifier: bob,
