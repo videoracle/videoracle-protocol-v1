@@ -2,11 +2,13 @@ import hre, { ethers } from "hardhat";
 import { ConfigProperty, set } from "../utils/configManager";
 
 async function main() {
+  const [deployer] = await ethers.getSigners();
+
   const network = hre.network.name;
   console.log("Network:", network);
 
   const VideOracle = await ethers.getContractFactory("VideOracle");
-  const videOracle = await VideOracle.deploy();
+  const videOracle = await VideOracle.deploy(deployer.address);
 
   console.log("Deployed VideOracle at", videOracle.address);
   set(network, ConfigProperty.VideOracle, videOracle.address);
