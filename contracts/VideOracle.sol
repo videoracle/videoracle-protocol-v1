@@ -4,8 +4,6 @@ pragma solidity ^0.8.13;
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-// import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
-
 contract VideOracle is Ownable2Step {
     enum RequestStatus {
         ACTIVE,
@@ -41,7 +39,7 @@ contract VideOracle is Ownable2Step {
     event RequestClosed(address indexed src, uint256 indexed requestId);
 
     uint256 constant TOTAL_VOTES = 5;
-    uint256 private _feeBPS = 300; // 100% = 10000
+    uint256 private _feeBPS = 30000; // 100% = 100000
     address private _feeCollector;
 
     mapping(uint256 => Request) public requests;
