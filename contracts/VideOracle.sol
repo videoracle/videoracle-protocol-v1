@@ -80,7 +80,6 @@ contract VideOracle is Ownable2Step {
             requestUri: requestURI
         });
 
-        // Send fee to collector
         Address.sendValue(payable(_feeCollector), (reward * _feeBPS) / 1e5);
         if (msg.value > minIn) {
             Address.sendValue(payable(msg.sender), msg.value - minIn);
@@ -131,7 +130,7 @@ contract VideOracle is Ownable2Step {
 
         require(
             request.requester == msg.sender,
-            "only proofer can vote their own requests"
+            "only requester can vote their own requests"
         );
 
         if (
@@ -178,5 +177,24 @@ contract VideOracle is Ownable2Step {
             (proofsByRequest[requestId][proofId]).verifier,
             proofReward
         );
+    }
+
+    function closeRequest(uint256 requestId) public {
+        Request storage request = requests[requestId];
+
+        require(
+            request.requester == msg.sender,
+            "only proofer can close their own requests"
+        );
+
+        require(
+            request.endTime <= block.timestamp,
+            "request not expired yet"
+        );
+
+        request.status = RequestStatus.CLOSED;
+        emit RequestClosed(request.requester, requestId);
+
+        Address.sendValue(payable(request.requester), request.reward);
     }
 }
