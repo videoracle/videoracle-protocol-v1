@@ -30,6 +30,7 @@ async function main() {
           "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
         image: "https://i.imgur.com/hMVpght.jpeg",
         location: {
+          address: "Milan, Italy",
           lat: 40.7128,
           lng: 74.006,
         },
@@ -37,21 +38,6 @@ async function main() {
     },
     {
       requester: bob,
-      timeToAnswer: 5,
-      reward: 100,
-      metadata: {
-        title: "This is a request to make something",
-        description:
-          "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
-        image: "https://i.imgur.com/hMVpght.jpeg",
-        location: {
-          lat: 40.7128,
-          lng: 74.006,
-        },
-      },
-    },
-    {
-      requester: carol,
       timeToAnswer: 100,
       reward: 100,
       metadata: {
@@ -60,6 +46,23 @@ async function main() {
           "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
         image: "https://i.imgur.com/hMVpght.jpeg",
         location: {
+          address: "Milan, Italy",
+          lat: 40.7128,
+          lng: 74.006,
+        },
+      },
+    },
+    {
+      requester: carol,
+      timeToAnswer: 3600,
+      reward: 100,
+      metadata: {
+        title: "This is a request to make something",
+        description:
+          "Lorem ipsum dolor sit amet consectetur adipisicing elit. Velit a officiis explicabo sequi doloribus assumenda, dicta vel, reiciendis consequuntur deserunt quos hic quae soluta eligendi et harum magni. Corrupti, voluptatum.",
+        image: "https://i.imgur.com/hMVpght.jpeg",
+        location: {
+          address: "Milan, Italy",
           lat: 40.7128,
           lng: 74.006,
         },
@@ -88,35 +91,37 @@ async function main() {
   }
 
   // Submit proofs
+  const proofUri =
+    "bafkreibrcwvsrtujst2shg7qhi6kkmeomwnbhibjadp2m4btyhbfoi3dl4";
   const proofs = [
     {
       verifier: bob,
       requestId: 0,
-      livePeerTokenId: 0,
+      proofUri,
     },
     {
       verifier: carol,
       requestId: 0,
-      livePeerTokenId: 1,
+      proofUri,
     },
     {
       verifier: david,
       requestId: 1,
-      livePeerTokenId: 2,
+      proofUri,
     },
     {
       verifier: eve,
       requestId: 1,
-      livePeerTokenId: 3,
+      proofUri,
     },
   ];
 
   for (const proof of proofs) {
-    const { requestId, livePeerTokenId, verifier } = proof;
+    const { requestId, proofUri, verifier } = proof;
 
     const submitProofTx = await videOracle
       .connect(verifier)
-      .submitProof(requestId, livePeerTokenId);
+      .submitProof(requestId, proofUri);
     const receipt = await submitProofTx.wait();
 
     const proofId = receipt.events

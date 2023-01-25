@@ -15,11 +15,10 @@ async function main() {
 
   // Submit proof
   const requestId = 0;
-  const livePeerTokenId = 0; // TODO: use actual livepeer video
+  const proofUri =
+    "bafkreibrcwvsrtujst2shg7qhi6kkmeomwnbhibjadp2m4btyhbfoi3dl4";
 
-  const tx = await videOracle
-    .connect(bob)
-    .submitProof(requestId, livePeerTokenId);
+  const tx = await videOracle.connect(bob).submitProof(requestId, proofUri);
   const receipt = await tx.wait();
 
   const proofId = receipt.events
