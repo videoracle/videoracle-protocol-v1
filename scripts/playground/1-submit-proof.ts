@@ -15,14 +15,13 @@ async function main() {
 
   // Submit proof
   const requestId = 0;
-  const proofUri =
-    "bafkreibrcwvsrtujst2shg7qhi6kkmeomwnbhibjadp2m4btyhbfoi3dl4";
+  const proofUri = "QmYekSW5qDKZEehxGoQo8cw5JoiY1eHoEkNvTrSK2C7j3r";
 
   const tx = await videOracle.connect(bob).submitProof(requestId, proofUri);
   const receipt = await tx.wait();
 
   const proofId = receipt.events
-    ?.find((e) => e.event === "NewProof")
+    ?.find((e: any) => e.event === "NewProof")
     ?.args?.proofId.toString();
 
   console.log(
