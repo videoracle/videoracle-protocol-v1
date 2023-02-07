@@ -4,8 +4,6 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { get, ConfigProperty } from "../../utils/configManager";
 import uploadToIPFS from "../../utils/ipfs";
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 async function main() {
   const network = hre.network.name;
   console.log("Network:", network);
@@ -23,7 +21,7 @@ async function main() {
     {
       requester: alice,
       timeToAnswer: 1,
-      reward: 100,
+      reward: ethers.utils.parseEther("1"),
       metadata: {
         title: "This is a request to make something",
         description:
@@ -39,7 +37,7 @@ async function main() {
     {
       requester: bob,
       timeToAnswer: 100,
-      reward: 100,
+      reward: ethers.utils.parseEther("1"),
       metadata: {
         title: "This is a request to make something",
         description:
@@ -55,7 +53,7 @@ async function main() {
     {
       requester: carol,
       timeToAnswer: 3600,
-      reward: 100,
+      reward: ethers.utils.parseEther("1"),
       metadata: {
         title: "This is a request to make something",
         description:
@@ -76,15 +74,17 @@ async function main() {
     const requestUri = await uploadToIPFS(metadata);
     if (!requestUri) return;
 
+    const fee = reward.div(100).mul(30);
+
     const createRequestTx = await videOracle
       .connect(requester)
       .createRequest(timeToAnswer, reward, requestUri, {
-        value: reward,
+        value: reward.add(fee),
       });
     const receipt = await createRequestTx.wait();
 
     const requestId = receipt.events
-      ?.find((e) => e.event === "NewRequest")
+      ?.find((e: any) => e.event === "NewRequest")
       ?.args?.requestId.toString();
 
     console.log("Created request with id:", requestId);
@@ -125,7 +125,7 @@ async function main() {
     const receipt = await submitProofTx.wait();
 
     const proofId = receipt.events
-      ?.find((e) => e.event === "NewProof")
+      ?.find((e: any) => e.event === "NewProof")
       ?.args?.proofId.toString();
 
     console.log(
