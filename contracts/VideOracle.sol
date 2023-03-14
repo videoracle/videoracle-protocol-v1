@@ -20,6 +20,9 @@ contract VideOracle is Ownable2Step {
     struct Proof {
         address payable verifier;
         string proofUri;
+        // lat/long in 1e7
+        uint256 latitude;
+        uint256 longitude;
     }
 
     event NewRequest(
@@ -33,7 +36,9 @@ contract VideOracle is Ownable2Step {
         address indexed src,
         uint256 indexed requestId,
         uint256 proofId,
-        string proofUri
+        string proofUri,
+        uint256 latitude,
+        uint256 longitude
     );
     event RequestVotingOpened(address indexed src, uint256 indexed requestId);
     event RequestClosed(address indexed src, uint256 indexed requestId);
@@ -87,7 +92,7 @@ contract VideOracle is Ownable2Step {
         emit NewRequest(msg.sender, requestId, endTime, reward, requestUri);
     }
 
-    function submitProof(uint256 requestId, string calldata proofUri)
+    function submitProof(uint256 requestId, string calldata proofUri, uint256 latitude, uint256 longitude)
         public
         returns (uint256 proofId)
     {
@@ -109,10 +114,12 @@ contract VideOracle is Ownable2Step {
 
         proofsByRequest[requestId][proofId] = Proof({
             proofUri: proofUri,
-            verifier: payable(msg.sender)
+            verifier: payable(msg.sender),
+            latitude: latitude,
+            longitude: longitude
         });
 
-        emit NewProof(msg.sender, requestId, proofId, proofUri);
+        emit NewProof(msg.sender, requestId, proofId, proofUri, latitude, longitude);
     }
 
     function voteProofs(
