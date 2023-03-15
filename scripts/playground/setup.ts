@@ -3,6 +3,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { get, ConfigProperty } from "../../utils/configManager";
 import uploadToIPFS from "../../utils/ipfs";
+import { VideOracle } from "../../typechain-types";
 
 async function main() {
   const network = hre.network.name;
@@ -11,10 +12,10 @@ async function main() {
   const [, alice, bob, carol, david, eve] = await ethers.getSigners();
 
   // Get contracts
-  const videOracle = await ethers.getContractAt(
+  const videOracle = (await ethers.getContractAt(
     "VideOracle",
     get(network, ConfigProperty.VideOracle)
-  );
+  )) as VideOracle;
 
   // Create requests
   const requests = [
@@ -36,7 +37,7 @@ async function main() {
     },
     {
       requester: bob,
-      timeToAnswer: 100,
+      timeToAnswer: 1,
       reward: ethers.utils.parseEther("1"),
       metadata: {
         title: "This is a request to make something",
@@ -93,35 +94,45 @@ async function main() {
   // Submit proofs
   const proofUri =
     "bafkreibrcwvsrtujst2shg7qhi6kkmeomwnbhibjadp2m4btyhbfoi3dl4";
+  const proofLat = 387241060;
+  const proofLng = -91345574;
   const proofs = [
     {
       verifier: bob,
       requestId: 0,
       proofUri,
+      latitude: proofLat,
+      longitude: proofLng,
     },
     {
       verifier: carol,
       requestId: 0,
       proofUri,
+      latitude: proofLat,
+      longitude: proofLng,
     },
     {
       verifier: david,
       requestId: 1,
       proofUri,
+      latitude: proofLat,
+      longitude: proofLng,
     },
     {
       verifier: eve,
       requestId: 1,
       proofUri,
+      latitude: proofLat,
+      longitude: proofLng,
     },
   ];
 
   for (const proof of proofs) {
-    const { requestId, proofUri, verifier } = proof;
+    const { requestId, proofUri, verifier, latitude, longitude } = proof;
 
     const submitProofTx = await videOracle
       .connect(verifier)
-      .submitProof(requestId, proofUri);
+      .submitProof(requestId, proofUri, latitude, longitude);
     const receipt = await submitProofTx.wait();
 
     const proofId = receipt.events
